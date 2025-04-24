@@ -6,11 +6,13 @@ This project will set up a Kasm VM and run the Signal desktop app.
 
 It will then go through Cloudflare and set up a tunnel, an access application, and an access rule to add your email to the allow list.
 
+You will need:
+- A Cloudflare account
+- A domain registered with Cloudflare
+- `docker.io` and `docker-compose-plugin` installed on your system
+- This repo
+
 ## Setup
-
-Step 1: Clone this repository
-
-Step 2: Ensure you have `docker.io` and the `docker-compose-plugin` installed
 
 Before proceeding, you will need to go to Cloudflare and set up an API key. 
 
