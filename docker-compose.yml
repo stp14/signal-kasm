@@ -1,0 +1,53 @@
+services:
+  signal-kasm:
+    build: .
+    container_name: signal-kasm
+    privileged: true
+    environment:
+      - KASM_PORT=443
+    volumes:
+      - /dev/input:/dev/input
+      - /run/udev/data:/run/udev/data
+    #ports:
+    #  - 30001:3000
+    restart: unless-stopped
+    networks:
+      - signalnet
+
+  cloudflare-init:
+    build: ./cloudflared
+    depends_on:
+      - signal-kasm
+    environment:
+      CF_ZONE: ${CF_ZONE}
+      CF_API_TOKEN: ${CF_API_TOKEN}
+      CF_TUNNEL_NAME: ${CF_TUNNEL_NAME}
+      CF_HOSTNAME: ${CF_HOSTNAME}
+      CF_EMAIL: ${CF_EMAIL}
+      CF_FILES_PATH: ${CF_FILES_PATH}
+      CF_TUNNEL_CREDENTIAL_FILE: ${CF_TUNNEL_CREDENTIAL_FILE}
+      CF_CONFIG_FILE: ${CF_CONFIG_FILE}
+      ACCESS_POLICY_NAME: ${ACCESS_POLICY_NAME}
+      APP_NAME: ${APP_NAME}
+    volumes:
+      - ./cloudflared:${CF_FILES_PATH}
+    entrypoint: ["${CF_FILES_PATH}/entrypoint.sh"]
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    networks:
+      - signalnet
+    restart: unless-stopped
+    depends_on:
+      cloudflare-init:
+        condition: service_completed_successfully
+    environment:
+      CF_CONFIG_FILE: ${CF_FILES_PATH}/${CF_CONFIG_FILE}
+      CF_TUNNEL_CREDENTIAL_FILE: ${CF_FILES_PATH}/${CF_TUNNEL_CREDENTIAL_FILE}
+    volumes:
+      - ./cloudflared:${CF_FILES_PATH}
+    command: --config ${CF_FILES_PATH}/${CF_CONFIG_FILE} tunnel run
+
+networks:
+  signalnet:
+    driver: bridge
